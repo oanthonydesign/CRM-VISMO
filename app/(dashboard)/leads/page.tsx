@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Database, Upload } from "lucide-react";
-import { mockLeads } from "@/lib/mock-data";
+import { createClient } from "@/lib/supabase/server";
 
 function getStatusColor(status: string) {
     switch (status) {
@@ -16,7 +16,20 @@ function getStatusColor(status: string) {
     }
 }
 
-export default function LeadsPage() {
+
+export default async function LeadsPage() {
+    const supabase = await createClient();
+
+    // Buscar leads (prospecções) do banco
+    const { data: leads, error } = await supabase
+        .from('prospeccoes')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Erro ao buscar leads:', error);
+    }
+
     return (
         <div className="space-y-8">
             {/* Header */}
@@ -77,46 +90,54 @@ export default function LeadsPage() {
                         <Database className="h-5 w-5 text-text-secondary" />
                         Todos os Leads
                     </CardTitle>
-                    <CardDescription>{mockLeads.length} leads encontrados</CardDescription>
+                    <CardDescription>{leads?.length || 0} leads encontrados</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Nome</TableHead>
-                                <TableHead>Empresa</TableHead>
-                                <TableHead>Contato</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Origem</TableHead>
-                                <TableHead className="text-right">Ações</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {mockLeads.map((lead) => (
-                                <TableRow key={lead.id}>
-                                    <TableCell className="font-medium">{lead.nome}</TableCell>
-                                    <TableCell>{lead.empresa}</TableCell>
-                                    <TableCell>
-                                        <div className="flex flex-col text-xs text-text-secondary">
-                                            <span>{lead.email}</span>
-                                            <span>{lead.telefone}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className={getStatusColor(lead.status)}>
-                                            {lead.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="capitalize">{lead.origem}</TableCell>
-                                    <TableCell className="text-right">
-                                        <Button variant="ghost" size="sm">Ver</Button>
-                                    </TableCell>
+                    {leads && leads.length > 0 ? (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Nome</TableHead>
+                                    <TableHead>Empresa</TableHead>
+                                    <TableHead>Contato</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Origem</TableHead>
+                                    <TableHead className="text-right">Ações</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {leads.map((lead) => (
+                                    <TableRow key={lead.id}>
+                                        <TableCell className="font-medium">{lead.nome}</TableCell>
+                                        <TableCell>{lead.empresa || '—'}</TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col text-xs text-text-secondary">
+                                                <span>{lead.email || '—'}</span>
+                                                <span>{lead.telefone || '—'}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className={getStatusColor(lead.status)}>
+                                                {lead.status}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="capitalize">{lead.origem || '—'}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Button variant="ghost" size="sm">Ver</Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    ) : (
+                        <div className="text-center py-12 text-text-secondary">
+                            <p>Nenhum lead cadastrado ainda.</p>
+                            <p className="text-sm mt-2">Clique em "Novo Lead" para começar.</p>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>
     );
 }
+

@@ -4,19 +4,49 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Grid, Col } from "@/components/layout/grid";
 import { DollarSign, TrendingUp, TrendingDown, Activity } from "lucide-react";
-import { mockFinanceiro, mockFluxoCaixa, mockParcelas } from "@/lib/mock-data";
 import { Badge } from "@/components/ui/badge";
+import { createClient } from "@/lib/supabase/server";
+import { calcularKPIs } from "@/lib/utils/kpis";
 
 function getStatusColor(status: string) {
     switch (status) {
         case "pendente": return "bg-yellow-500/20 text-yellow-500 border-yellow-500/50";
         case "atrasada": return "bg-red-500/20 text-red-500 border-red-500/50";
-        case "paga": return "bg-green-500/20 text-green-500 border-green-500/50";
+        case "pago": return "bg-green-500/20 text-green-500 border-green-500/50";
         default: return "bg-gray-500/20 text-gray-500";
     }
 }
 
-export default function FinanceiroPage() {
+export default async function FinanceiroPage() {
+    const supabase = await createClient();
+    const kpis = await calcularKPIs();
+
+    // Buscar parcelas pendentes
+    const { data: parcelas } = await supabase
+        .from('parcelas')
+        .select(`
+            *,
+            contrato:contratos(
+                empresa:empresas(nome)
+            )
+        `)
+        .in('status', ['pendente', 'atrasada'])
+        .order('data_vencimento', { ascending: true })
+        .limit(10);
+
+    // Buscar dados para o gráfico de fluxo de caixa (últimos 6 meses)
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const { data: transacoes } = await supabase
+        .from('entradas_saidas')
+        .select('*')
+        .gte('data_transacao', sixMonthsAgo.toISOString())
+        .order('data_transacao', { ascending: true });
+
+    // Processar dados para o gráfico
+    const chartData = processChartData(transacoes || []);
+
     return (
         <div className="space-y-8">
             {/* Header */}
@@ -30,8 +60,8 @@ export default function FinanceiroPage() {
                 <Col span={1}>
                     <KPICard
                         title="Receita Recebida"
-                        value={mockFinanceiro.receitaRecebida.value.toLocaleString('pt-BR')}
-                        change={mockFinanceiro.receitaRecebida.change}
+                        value={kpis.receita_mes.toLocaleString('pt-BR')}
+                        change={0} // TODO: Calcular variação
                         icon={<DollarSign className="h-4 w-4" />}
                         format="currency"
                     />
@@ -39,17 +69,17 @@ export default function FinanceiroPage() {
                 <Col span={1}>
                     <KPICard
                         title="Receita Prevista"
-                        value={mockFinanceiro.receitaPrevista.value.toLocaleString('pt-BR')}
-                        change={mockFinanceiro.receitaPrevista.change}
+                        value={kpis.receita_prevista.toLocaleString('pt-BR')}
+                        change={0}
                         icon={<TrendingUp className="h-4 w-4" />}
                         format="currency"
                     />
                 </Col>
                 <Col span={1}>
                     <KPICard
-                        title="Lucro"
-                        value={mockFinanceiro.lucro.value.toLocaleString('pt-BR')}
-                        change={mockFinanceiro.lucro.change}
+                        title="Lucro (Caixa)"
+                        value={kpis.caixa_atual.toLocaleString('pt-BR')}
+                        change={0}
                         icon={<Activity className="h-4 w-4" />}
                         format="currency"
                     />
@@ -57,8 +87,8 @@ export default function FinanceiroPage() {
                 <Col span={1}>
                     <KPICard
                         title="Burn Rate"
-                        value={mockFinanceiro.burnRate.value.toLocaleString('pt-BR')}
-                        change={mockFinanceiro.burnRate.change}
+                        value={kpis.burn_rate.toLocaleString('pt-BR')}
+                        change={0}
                         icon={<TrendingDown className="h-4 w-4" />}
                         format="currency"
                     />
@@ -73,7 +103,7 @@ export default function FinanceiroPage() {
                 </CardHeader>
                 <CardContent>
                     <LineChart
-                        data={mockFluxoCaixa}
+                        data={chartData}
                         xKey="mes"
                         lines={[
                             { key: "entradas", color: "#10B981", name: "Entradas" },
@@ -101,11 +131,17 @@ export default function FinanceiroPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {mockParcelas.map((parcela) => (
+                            {parcelas?.map((parcela) => (
                                 <TableRow key={parcela.id}>
-                                    <TableCell className="font-medium">{parcela.cliente}</TableCell>
-                                    <TableCell className="font-mono">R$ {parcela.valor.toLocaleString('pt-BR')}</TableCell>
-                                    <TableCell className="font-mono text-sm">{parcela.vencimento}</TableCell>
+                                    <TableCell className="font-medium">
+                                        {parcela.contrato?.empresa?.nome || '—'}
+                                    </TableCell>
+                                    <TableCell className="font-mono">
+                                        R$ {parcela.valor.toLocaleString('pt-BR')}
+                                    </TableCell>
+                                    <TableCell className="font-mono text-sm">
+                                        {new Date(parcela.data_vencimento).toLocaleDateString('pt-BR')}
+                                    </TableCell>
                                     <TableCell>
                                         <Badge variant="outline" className={getStatusColor(parcela.status)}>
                                             {parcela.status}
@@ -113,10 +149,41 @@ export default function FinanceiroPage() {
                                     </TableCell>
                                 </TableRow>
                             ))}
+                            {(!parcelas || parcelas.length === 0) && (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center py-8 text-text-secondary">
+                                        Nenhuma parcela pendente.
+                                    </TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </CardContent>
             </Card>
         </div>
     );
+}
+
+function processChartData(transacoes: any[]) {
+    const months: { [key: string]: { mes: string, entradas: number, saidas: number } } = {};
+
+    // Initialize last 6 months
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        const label = d.toLocaleString('pt-BR', { month: 'short' });
+        months[key] = { mes: label, entradas: 0, saidas: 0 };
+    }
+
+    transacoes.forEach(t => {
+        const d = new Date(t.data_transacao);
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        if (months[key]) {
+            if (t.tipo === 'entrada') months[key].entradas += t.valor;
+            if (t.tipo === 'saida') months[key].saidas += t.valor;
+        }
+    });
+
+    return Object.values(months);
 }

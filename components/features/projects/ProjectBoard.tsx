@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { mockTasks } from "@/lib/mock-data";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const columns = [
@@ -10,9 +9,22 @@ const columns = [
     { id: "done", label: "Concluído" },
 ];
 
-export function ProjectBoard() {
+export function ProjectBoard({ projetos }: { projetos: any[] }) {
+    // Flatten tasks from all projects
+    const allTasks = projetos?.flatMap(p => p.tasks || []) || [];
+
     const getTasksByStatus = (status: string) => {
-        return mockTasks.filter(task => task.status === status);
+        return allTasks.filter(task => task.status === status);
+    };
+
+    const getInitials = (name: string) => {
+        if (!name) return "ID";
+        return name
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .toUpperCase()
+            .slice(0, 2);
     };
 
     return (
@@ -36,11 +48,11 @@ export function ProjectBoard() {
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <Badge variant="outline" className="text-[10px] h-5 px-1.5 uppercase">
-                                            {task.priority}
+                                            {task.priority || 'normal'}
                                         </Badge>
                                         <Avatar className="h-6 w-6">
                                             <AvatarFallback className="text-[10px] bg-brand-primary/10 text-brand-primary">
-                                                ID
+                                                {getInitials(task.assignee?.full_name)}
                                             </AvatarFallback>
                                         </Avatar>
                                     </div>

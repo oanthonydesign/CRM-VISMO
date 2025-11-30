@@ -4,8 +4,33 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProjectPortfolio } from "@/components/features/projects/ProjectPortfolio";
 import { ProjectBoard } from "@/components/features/projects/ProjectBoard";
 import { ProjectTimeline } from "@/components/features/projects/ProjectTimeline";
+import { createClient } from "@/lib/supabase/server";
 
-export default function ProjetosPage() {
+export default async function ProjetosPage() {
+    const supabase = await createClient();
+
+    // Buscar projetos do banco
+    const { data: projetos, error } = await supabase
+        .from('projetos')
+        .select(`
+            *,
+            empresa:empresas(nome),
+            owner:profiles(full_name),
+            tasks(
+                id, 
+                title, 
+                status, 
+                priority, 
+                assignee_id,
+                assignee:profiles(full_name)
+            )
+        `)
+        .order('deadline', { ascending: true });
+
+    if (error) {
+        console.error('Erro ao buscar projetos:', error);
+    }
+
     return (
         <div className="space-y-8 h-full flex flex-col">
             {/* Header */}
@@ -29,15 +54,15 @@ export default function ProjetosPage() {
                 </div>
 
                 <TabsContent value="portfolio" className="flex-1">
-                    <ProjectPortfolio />
+                    <ProjectPortfolio projetos={projetos || []} />
                 </TabsContent>
 
                 <TabsContent value="board" className="flex-1 h-full">
-                    <ProjectBoard />
+                    <ProjectBoard projetos={projetos || []} />
                 </TabsContent>
 
                 <TabsContent value="timeline" className="flex-1">
-                    <ProjectTimeline />
+                    <ProjectTimeline projetos={projetos || []} />
                 </TabsContent>
             </Tabs>
         </div>

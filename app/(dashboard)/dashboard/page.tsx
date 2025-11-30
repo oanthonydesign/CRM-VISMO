@@ -5,16 +5,43 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Grid, Col } from "@/components/layout/grid";
 import { DollarSign, FileText, TrendingUp, Target } from "lucide-react";
-import { mockKPIs, mockReceitaChart, mockFunil, mockAtividades } from "@/lib/mock-data";
+import { createClient } from "@/lib/supabase/server";
+import { calcularKPIs } from "@/lib/utils/kpis";
 
-export default function DashboardPage() {
-    const funilData = [
-        { etapa: "Descoberta", quantidade: mockFunil.descoberta },
-        { etapa: "Diagnóstico", quantidade: mockFunil.diagnostico },
-        { etapa: "Proposta", quantidade: mockFunil.proposta },
-        { etapa: "Negociação", quantidade: mockFunil.negociacao },
-        { etapa: "Fechado", quantidade: mockFunil.fechado },
-    ];
+export default async function DashboardPage() {
+    const supabase = await createClient();
+    const kpis = await calcularKPIs();
+
+    // Buscar dados para o gráfico de receita (últimos 6 meses)
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const { data: transacoes } = await supabase
+        .from('entradas_saidas')
+        .select('*')
+        .eq('tipo', 'entrada')
+        .gte('data_transacao', sixMonthsAgo.toISOString())
+        .order('data_transacao', { ascending: true });
+
+    const receitaChartData = processReceitaChart(transacoes || []);
+
+    // Buscar dados para o funil (deals por estágio)
+    const { data: deals } = await supabase
+        .from('deals')
+        .select('estagio');
+
+    const funilData = processFunilData(deals || []);
+
+    // Buscar atividades recentes
+    const { data: atividades } = await supabase
+        .from('atividades')
+        .select(`
+            *,
+            empresa:empresas(nome),
+            responsavel:profiles(full_name)
+        `)
+        .order('data_realizada', { ascending: false })
+        .limit(5);
 
     return (
         <div className="space-y-8">
@@ -29,8 +56,8 @@ export default function DashboardPage() {
                 <Col span={1}>
                     <KPICard
                         title="Receita do Mês"
-                        value={mockKPIs.receitaMes.value.toLocaleString('pt-BR')}
-                        change={mockKPIs.receitaMes.change}
+                        value={kpis.receita_mes.toLocaleString('pt-BR')}
+                        change={0} // TODO: Calcular variação
                         icon={<DollarSign className="h-4 w-4" />}
                         format="currency"
                     />
@@ -38,24 +65,24 @@ export default function DashboardPage() {
                 <Col span={1}>
                     <KPICard
                         title="Contratos Ativos"
-                        value={mockKPIs.contratosAtivos.value}
-                        change={mockKPIs.contratosAtivos.change}
+                        value={kpis.contratos_ativos}
+                        change={0}
                         icon={<FileText className="h-4 w-4" />}
                     />
                 </Col>
                 <Col span={1}>
                     <KPICard
                         title="Oportunidades"
-                        value={mockKPIs.oportunidadesAbertas.value}
-                        change={mockKPIs.oportunidadesAbertas.change}
+                        value={kpis.oportunidades_abertas}
+                        change={0}
                         icon={<TrendingUp className="h-4 w-4" />}
                     />
                 </Col>
                 <Col span={1}>
                     <KPICard
                         title="Taxa Fechamento"
-                        value={mockKPIs.taxaFechamento.value}
-                        change={mockKPIs.taxaFechamento.change}
+                        value={kpis.taxa_conversao}
+                        change={0}
                         icon={<Target className="h-4 w-4" />}
                         format="percentage"
                     />
@@ -72,7 +99,7 @@ export default function DashboardPage() {
                         </CardHeader>
                         <CardContent>
                             <LineChart
-                                data={mockReceitaChart}
+                                data={receitaChartData}
                                 xKey="mes"
                                 lines={[{ key: "receita", color: "#FE3C00", name: "Receita" }]}
                                 height={300}
@@ -116,15 +143,24 @@ export default function DashboardPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {mockAtividades.map((atividade) => (
+                            {atividades?.map((atividade) => (
                                 <TableRow key={atividade.id}>
                                     <TableCell className="font-mono uppercase text-xs">{atividade.tipo}</TableCell>
-                                    <TableCell className="font-medium">{atividade.empresa}</TableCell>
+                                    <TableCell className="font-medium">{atividade.empresa?.nome || '—'}</TableCell>
                                     <TableCell className="text-text-secondary">{atividade.descricao}</TableCell>
-                                    <TableCell className="font-mono text-sm">{atividade.data}</TableCell>
-                                    <TableCell>{atividade.responsavel}</TableCell>
+                                    <TableCell className="font-mono text-sm">
+                                        {new Date(atividade.data_realizada).toLocaleDateString('pt-BR')}
+                                    </TableCell>
+                                    <TableCell>{atividade.responsavel?.full_name || '—'}</TableCell>
                                 </TableRow>
                             ))}
+                            {(!atividades || atividades.length === 0) && (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center py-8 text-text-secondary">
+                                        Nenhuma atividade recente.
+                                    </TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </CardContent>
@@ -132,3 +168,51 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+function processReceitaChart(transacoes: any[]) {
+    const months: { [key: string]: { mes: string, receita: number } } = {};
+
+    // Initialize last 6 months
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        const label = d.toLocaleString('pt-BR', { month: 'short' });
+        months[key] = { mes: label, receita: 0 };
+    }
+
+    transacoes.forEach(t => {
+        const d = new Date(t.data_transacao);
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        if (months[key]) {
+            months[key].receita += t.valor;
+        }
+    });
+
+    return Object.values(months);
+}
+
+function processFunilData(deals: any[]) {
+    const etapas = [
+        "descoberta",
+        "diagnostico",
+        "proposta",
+        "negociacao",
+        "fechado_ganho"
+    ];
+
+    const counts: { [key: string]: number } = {};
+    etapas.forEach(e => counts[e] = 0);
+
+    deals.forEach(d => {
+        if (counts[d.estagio] !== undefined) {
+            counts[d.estagio]++;
+        }
+    });
+
+    return etapas.map(etapa => ({
+        etapa: etapa.charAt(0).toUpperCase() + etapa.slice(1).replace('_', ' '),
+        quantidade: counts[etapa]
+    }));
+}
+

@@ -2,10 +2,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Grid, Col } from "@/components/layout/grid";
 import { Plus, Target } from "lucide-react";
-import { mockMetas } from "@/lib/mock-data";
 import { Progress } from "@/components/ui/progress";
+import { createClient } from "@/lib/supabase/server";
 
-export default function MetasPage() {
+export default async function MetasPage() {
+    const supabase = await createClient();
+
+    const { data: metas } = await supabase
+        .from('metas')
+        .select('*')
+        .order('created_at', { ascending: false });
+
     return (
         <div className="space-y-8">
             {/* Header */}
@@ -21,8 +28,8 @@ export default function MetasPage() {
 
             {/* Goals Grid */}
             <Grid cols={1}>
-                {mockMetas.map((meta) => {
-                    const progresso = Math.round((meta.atual / meta.meta) * 100);
+                {metas?.map((meta) => {
+                    const progresso = meta.meta_valor > 0 ? Math.round((meta.atual_valor / meta.meta_valor) * 100) : 0;
                     const isCompleta = progresso >= 100;
 
                     return (
@@ -42,7 +49,7 @@ export default function MetasPage() {
                                         <div className="text-right">
                                             <div className="text-2xl font-bold text-text-primary">{progresso}%</div>
                                             <div className="text-xs text-text-secondary font-mono">
-                                                {meta.atual.toLocaleString()} / {meta.meta.toLocaleString()}
+                                                {meta.atual_valor.toLocaleString()} / {meta.meta_valor.toLocaleString()}
                                             </div>
                                         </div>
                                     </div>
@@ -57,7 +64,13 @@ export default function MetasPage() {
                         </Col>
                     );
                 })}
+                {(!metas || metas.length === 0) && (
+                    <div className="text-center py-8 text-text-secondary">
+                        Nenhuma meta cadastrada.
+                    </div>
+                )}
             </Grid>
         </div>
     );
 }
+

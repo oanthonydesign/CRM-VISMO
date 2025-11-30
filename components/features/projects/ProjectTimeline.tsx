@@ -1,8 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { mockProjetos } from "@/lib/mock-data";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-export function ProjectTimeline() {
+export function ProjectTimeline({ projetos }: { projetos: any[] }) {
     // Simplified timeline visualization
     const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"];
 
@@ -20,11 +19,11 @@ export function ProjectTimeline() {
             </div>
 
             <div className="space-y-4">
-                {mockProjetos.map((projeto) => (
+                {projetos?.map((projeto) => (
                     <div key={projeto.id} className="flex items-center group">
                         <div className="w-64 flex-shrink-0 pr-4">
                             <p className="text-sm font-medium text-text-primary truncate">{projeto.nome}</p>
-                            <p className="text-xs text-text-secondary truncate">{projeto.cliente}</p>
+                            <p className="text-xs text-text-secondary truncate">{projeto.empresa?.nome || 'Sem cliente'}</p>
                         </div>
                         <div className="flex-1 grid grid-cols-6 relative h-8 items-center">
                             {/* Grid lines */}
