@@ -1,11 +1,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Database, Upload } from "lucide-react";
+import { Search, Database } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { LeadPageHeader } from "@/components/leads/lead-page-header";
+import { LeadTableActions } from "@/components/leads/lead-table-actions";
 
 function getStatusColor(status: string) {
     switch (status) {
@@ -33,20 +34,7 @@ export default async function LeadsPage() {
     return (
         <div className="space-y-8">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                    <h1 className="text-display-xl font-sans text-text-primary">Banco de Leads</h1>
-                    <p className="text-text-secondary font-mono">Repositório geral de contatos</p>
-                </div>
-                <div className="flex gap-2">
-                    <Button variant="outline">
-                        <Upload className="mr-2 h-4 w-4" /> Importar
-                    </Button>
-                    <Button>
-                        <Plus className="mr-2 h-4 w-4" /> Novo Lead
-                    </Button>
-                </div>
-            </div>
+            <LeadPageHeader />
 
             {/* Filters */}
             <Card>
@@ -123,7 +111,7 @@ export default async function LeadsPage() {
                                         </TableCell>
                                         <TableCell className="capitalize">{lead.origem || '—'}</TableCell>
                                         <TableCell className="text-right">
-                                            <Button variant="ghost" size="sm">Ver</Button>
+                                            <LeadTableActions lead={lead} />
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -140,4 +128,5 @@ export default async function LeadsPage() {
         </div>
     );
 }
+
 
