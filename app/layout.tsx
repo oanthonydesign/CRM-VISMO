@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Inter_Tight } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const interMono = Inter_Tight({ subsets: ["latin"], variable: "--font-inter-mono", weight: ["400", "500"] }); // Using Inter Tight as a proxy for "Inter TT Mono" or similar technical feel if exact font not available via Google Fonts
@@ -20,6 +21,7 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={cn(inter.variable, interMono.variable, "font-sans bg-background-default text-text-primary")}>
         {children}
+        <Toaster />
       </body>
     </html>
   );
