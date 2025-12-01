@@ -159,7 +159,7 @@ export function DealFormDialog({ open, onOpenChange, deal, defaultStage }: DealF
                                 <FormLabel>Valor (R$)</FormLabel>
                                 <Input
                                     type="number"
-                                    {...register("valor")}
+                                    {...register("valor", { valueAsNumber: true })}
                                     placeholder="0,00"
                                     disabled={isSubmitting}
                                 />
@@ -171,7 +171,7 @@ export function DealFormDialog({ open, onOpenChange, deal, defaultStage }: DealF
                                 <FormLabel>Probabilidade (%)</FormLabel>
                                 <Input
                                     type="number"
-                                    {...register("probabilidade")}
+                                    {...register("probabilidade", { valueAsNumber: true })}
                                     placeholder="0-100"
                                     min={0}
                                     max={100}
