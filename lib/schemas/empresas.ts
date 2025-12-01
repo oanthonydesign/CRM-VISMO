@@ -4,7 +4,7 @@ export const empresaSchema = z.object({
     nome: z.string().min(1, 'Razão Social é obrigatória'),
     nome_fantasia: z.string().optional(),
     cnpj: z.string().optional(), // TODO: Adicionar validação de CNPJ se necessário
-    tipo: z.enum(['cliente', 'parceiro', 'fornecedor', 'prospect']),
+    tipo: z.enum(['cliente', 'parceiro', 'fornecedor', 'prospect', 'lead', 'ex-cliente']),
     status: z.enum(['ativo', 'inativo', 'churn']),
     setor: z.string().optional(),
     tamanho: z.enum(['pequena', 'media', 'grande', 'enterprise']).optional(),
