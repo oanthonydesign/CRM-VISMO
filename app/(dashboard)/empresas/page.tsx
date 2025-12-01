@@ -1,16 +1,19 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { EmpresaPageHeader } from "@/components/empresas/empresa-page-header";
+import { EmpresaTableActions } from "@/components/empresas/empresa-table-actions";
 
 function getTipoColor(tipo: string) {
     switch (tipo) {
         case "cliente": return "bg-green-500/20 text-green-500 border-green-500/50";
-        case "ex-cliente": return "bg-gray-500/20 text-gray-500 border-gray-500/50";
+        case "parceiro": return "bg-blue-500/20 text-blue-500 border-blue-500/50";
+        case "fornecedor": return "bg-purple-500/20 text-purple-500 border-purple-500/50";
+        case "prospect": return "bg-yellow-500/20 text-yellow-500 border-yellow-500/50";
         default: return "bg-gray-500/20 text-gray-500";
     }
 }
@@ -31,15 +34,7 @@ export default async function EmpresasPage() {
     return (
         <div className="space-y-8">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                    <h1 className="text-display-xl font-sans text-text-primary">Empresas</h1>
-                    <p className="text-text-secondary font-mono">Gestão de clientes</p>
-                </div>
-                <Button>
-                    <Plus className="mr-2 h-4 w-4" /> Nova Empresa
-                </Button>
-            </div>
+            <EmpresaPageHeader />
 
             {/* Filters */}
             <Card>
@@ -56,7 +51,20 @@ export default async function EmpresasPage() {
                             <SelectContent>
                                 <SelectItem value="todos">Todos</SelectItem>
                                 <SelectItem value="cliente">Cliente</SelectItem>
-                                <SelectItem value="ex-cliente">Ex-Cliente</SelectItem>
+                                <SelectItem value="prospect">Prospect</SelectItem>
+                                <SelectItem value="parceiro">Parceiro</SelectItem>
+                                <SelectItem value="fornecedor">Fornecedor</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Select defaultValue="todos">
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="todos">Todos</SelectItem>
+                                <SelectItem value="ativo">Ativo</SelectItem>
+                                <SelectItem value="inativo">Inativo</SelectItem>
+                                <SelectItem value="churn">Churn</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -100,7 +108,9 @@ export default async function EmpresasPage() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="font-mono">
-                                            {empresa.cidade || '—'}
+                                            {empresa.cidade && empresa.estado
+                                                ? `${empresa.cidade}/${empresa.estado}`
+                                                : empresa.cidade || '—'}
                                         </TableCell>
                                         <TableCell>
                                             <Badge variant={empresa.status === 'ativo' ? 'default' : 'secondary'}>
@@ -108,7 +118,7 @@ export default async function EmpresasPage() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <Button variant="ghost" size="sm">Ver</Button>
+                                            <EmpresaTableActions empresa={empresa} />
                                         </TableCell>
                                     </TableRow>
                                 ))}
