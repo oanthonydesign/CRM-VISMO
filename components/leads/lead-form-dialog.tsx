@@ -16,7 +16,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormField, FormLabel, FormMessage } from "@/components/ui/form"
-import { createLead, updateLead, leadSchema, type LeadFormData } from "@/app/actions/leads"
+import { createLead, updateLead } from "@/app/actions/leads"
+import { leadSchema, type LeadFormData } from "@/lib/schemas/leads"
 import { toast } from "@/lib/toast"
 
 interface LeadFormDialogProps {

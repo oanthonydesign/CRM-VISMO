@@ -3,19 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
-
-// Schema de validação
-export const leadSchema = z.object({
-    nome: z.string().min(1, 'Nome é obrigatório'),
-    empresa: z.string().optional(),
-    email: z.string().email('Email inválido').optional().or(z.literal('')),
-    telefone: z.string().optional(),
-    status: z.enum(['novo', 'qualificando', 'arquivado']).default('novo'),
-    origem: z.enum(['linkedin', 'site', 'indicacao', 'instagram', 'outro']).optional(),
-    observacoes: z.string().optional(),
-})
-
-export type LeadFormData = z.infer<typeof leadSchema>
+import { leadSchema, type LeadFormData } from '@/lib/schemas/leads'
 
 // CREATE
 export async function createLead(data: LeadFormData) {
