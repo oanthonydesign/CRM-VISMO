@@ -1,14 +1,10 @@
-import { getContracts, getCashFlow } from '@/app/actions/finance';
+import { getCashFlow } from '@/app/actions/finance';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-    const [contracts, cashFlow] = await Promise.all([
-        getContracts(),
-        getCashFlow()
-    ]);
+    const cashFlow = await getCashFlow();
 
     return NextResponse.json({
-        contracts,
         cashFlow
     });
 }

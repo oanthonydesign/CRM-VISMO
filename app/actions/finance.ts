@@ -120,42 +120,4 @@ export async function registerTransaction(formData: FormData) {
     return createTransaction(data)
 }
 
-// Contracts (keeping existing functions for now)
-export async function getContracts() {
-    const supabase = await createClient()
-    const { data, error } = await supabase
-        .from('contracts')
-        .select('*, empresas(nome)')
-        .order('created_at', { ascending: false })
 
-    if (error) {
-        console.error('Error fetching contracts:', error)
-        return []
-    }
-
-    return data
-}
-
-export async function createContract(formData: FormData) {
-    const supabase = await createClient()
-
-    const rawData = {
-        titulo: formData.get('titulo') as string,
-        empresa_id: formData.get('empresa_id') as string,
-        valor_total: parseFloat(formData.get('valor_total') as string),
-        data_inicio: formData.get('data_inicio') as string,
-        status: 'ativo'
-    }
-
-    const { error } = await supabase
-        .from('contracts')
-        .insert(rawData)
-
-    if (error) {
-        console.error('Error creating contract:', error)
-        return { error: 'Failed to create contract' }
-    }
-
-    revalidatePath('/financeiro')
-    return { success: true }
-}
