@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { signIn } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,6 +10,7 @@ import { Loader2, Eye, EyeOff } from 'lucide-react'
 import Image from 'next/image'
 
 export default function LoginPage() {
+    const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [showPassword, setShowPassword] = useState(false)
@@ -22,6 +24,8 @@ export default function LoginPage() {
         if (result?.error) {
             setError(result.error)
             setIsLoading(false)
+        } else if (result?.success) {
+            router.push('/dashboard')
         }
     }
 
