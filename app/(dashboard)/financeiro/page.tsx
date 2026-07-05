@@ -32,7 +32,7 @@ export default async function FinanceiroPage() {
 
     // Buscar transações
     const { data: transactions } = await supabase
-        .from('transactions')
+        .from('entradas_saidas')
         .select('*')
         .order('data_transacao', { ascending: false })
         .limit(50);

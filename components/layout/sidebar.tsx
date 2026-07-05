@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Users, Settings, PieChart, Box, Target, Database } from "lucide-react";
+import { LayoutDashboard, Users, Settings, PieChart, Box, Target, Radar } from "lucide-react";
 import { LogoCrm } from "@/components/svgs/LogoCrm";
 import { UserProfile } from "@/components/layout/user-profile";
 
@@ -45,10 +45,10 @@ export function Sidebar({ className, user }: SidebarProps) {
                                 Empresas
                             </Button>
                         </Link>
-                        <Link href="/leads">
+                        <Link href="/prospeccao">
                             <Button variant="ghost" className="w-full justify-start font-mono-sm">
-                                <Database className="mr-2 h-4 w-4" />
-                                Leads
+                                <Radar className="mr-2 h-4 w-4" />
+                                Prospecção
                             </Button>
                         </Link>
                         <Link href="/equipe">

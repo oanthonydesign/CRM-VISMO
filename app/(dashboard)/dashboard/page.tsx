@@ -7,6 +7,7 @@ import { Grid, Col } from "@/components/layout/grid";
 import { DollarSign, FileText, TrendingUp, Target } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { calcularKPIs } from "@/lib/utils/kpis";
+import { ActivitiesTimeline } from "@/components/features/activities-timeline";
 
 export default async function DashboardPage() {
     const supabase = await createClient();
@@ -64,8 +65,8 @@ export default async function DashboardPage() {
                 </Col>
                 <Col span={1}>
                     <KPICard
-                        title="Contratos Ativos"
-                        value={kpis.contratos_ativos}
+                        title="Clientes Ativos"
+                        value={kpis.clientes_ativos}
                         change={0}
                         icon={<FileText className="h-4 w-4" />}
                     />
@@ -132,37 +133,7 @@ export default async function DashboardPage() {
                     <CardDescription>Últimas interações com clientes</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Tipo</TableHead>
-                                <TableHead>Empresa</TableHead>
-                                <TableHead>Descrição</TableHead>
-                                <TableHead>Data</TableHead>
-                                <TableHead>Responsável</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {atividades?.map((atividade) => (
-                                <TableRow key={atividade.id}>
-                                    <TableCell className="font-mono uppercase text-xs">{atividade.tipo}</TableCell>
-                                    <TableCell className="font-medium">{atividade.empresa?.nome || '—'}</TableCell>
-                                    <TableCell className="text-text-secondary">{atividade.descricao}</TableCell>
-                                    <TableCell className="font-mono text-sm">
-                                        {new Date(atividade.data_realizada).toLocaleDateString('pt-BR')}
-                                    </TableCell>
-                                    <TableCell>{atividade.responsavel?.full_name || '—'}</TableCell>
-                                </TableRow>
-                            ))}
-                            {(!atividades || atividades.length === 0) && (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="text-center py-8 text-text-secondary">
-                                        Nenhuma atividade recente.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
+                    <ActivitiesTimeline atividades={atividades || []} />
                 </CardContent>
             </Card>
         </div>

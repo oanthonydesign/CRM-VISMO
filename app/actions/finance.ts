@@ -9,7 +9,7 @@ import { transactionSchema, type TransactionFormData } from '@/lib/schemas/trans
 export async function getTransactions() {
     const supabase = await createClient()
     const { data, error } = await supabase
-        .from('transactions')
+        .from('entradas_saidas')
         .select('*')
         .order('data_transacao', { ascending: false })
 
@@ -34,7 +34,7 @@ export async function createTransaction(data: TransactionFormData) {
         const validated = transactionSchema.parse(data)
 
         const { error } = await supabase
-            .from('transactions')
+            .from('entradas_saidas')
             .insert({
                 ...validated,
                 comprovante_url: validated.comprovante_url || null,
@@ -63,7 +63,7 @@ export async function updateTransaction(id: string, data: Partial<TransactionFor
         const supabase = await createClient()
 
         const { error } = await supabase
-            .from('transactions')
+            .from('entradas_saidas')
             .update({
                 ...data,
                 updated_at: new Date().toISOString(),
@@ -89,7 +89,7 @@ export async function deleteTransaction(id: string) {
         const supabase = await createClient()
 
         const { error } = await supabase
-            .from('transactions')
+            .from('entradas_saidas')
             .delete()
             .eq('id', id)
 

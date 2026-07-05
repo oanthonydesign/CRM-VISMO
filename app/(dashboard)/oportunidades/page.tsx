@@ -6,6 +6,7 @@ import { formatCurrency } from "@/utils/format";
 import { DealPageHeader } from "@/components/oportunidades/deal-page-header";
 import { DealCardActions } from "@/components/oportunidades/deal-card-actions";
 import { DealFormDialog } from "@/components/oportunidades/deal-form-dialog";
+import { KanbanBoard } from "@/components/oportunidades/kanban-board";
 
 const etapas = [
     { key: "prospeccao", label: "Prospecção", color: "bg-gray-500/20 text-gray-500" },
@@ -51,69 +52,7 @@ export default async function OportunidadesPage() {
             <DealPageHeader />
 
             {/* Kanban Board */}
-            <div className="flex gap-4 overflow-x-auto pb-4 min-h-[calc(100vh-250px)]">
-                {etapas.map((etapa) => {
-                    const oportunidadesEtapa = getOportunidadesPorEtapa(etapa.key);
-                    const total = calcularTotalEtapa(etapa.key);
-
-                    return (
-                        <div key={etapa.key} className="flex-shrink-0 w-80">
-                            <Card className="h-full bg-background-elevated/50 border-utility-border-subtle">
-                                <CardHeader className="pb-3 bg-background-surface/50 rounded-t-lg">
-                                    <div className="flex items-center justify-between">
-                                        <CardTitle className="text-sm font-medium uppercase tracking-wider text-text-secondary">
-                                            {etapa.label}
-                                        </CardTitle>
-                                        <Badge variant="outline" className={etapa.color}>
-                                            {oportunidadesEtapa.length}
-                                        </Badge>
-                                    </div>
-                                    <CardDescription className="font-mono text-xs font-medium text-text-primary">
-                                        {formatCurrency(total)}
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-3 p-3">
-                                    {oportunidadesEtapa.length === 0 ? (
-                                        <div className="text-center text-text-secondary text-xs py-8 border-2 border-dashed border-utility-border-subtle rounded-lg">
-                                            Vazio
-                                        </div>
-                                    ) : (
-                                        oportunidadesEtapa.map((op) => (
-                                            <Card key={op.id} className="bg-background-default border-utility-border-subtle hover:border-brand-primary/50 transition-all shadow-sm group">
-                                                <CardContent className="p-3 space-y-3">
-                                                    <div className="flex items-start justify-between gap-2">
-                                                        <h4 className="font-medium text-sm text-text-primary line-clamp-2">
-                                                            {op.titulo}
-                                                        </h4>
-                                                        <DealCardActions deal={op} />
-                                                    </div>
-
-                                                    {op.empresa?.nome && (
-                                                        <div className="text-xs text-text-secondary flex items-center gap-1">
-                                                            <span className="truncate max-w-[180px]">{op.empresa.nome}</span>
-                                                        </div>
-                                                    )}
-
-                                                    <div className="flex items-center justify-between pt-2 border-t border-utility-border-subtle">
-                                                        <span className="font-mono text-sm font-medium text-text-primary">
-                                                            {formatCurrency(op.valor || 0)}
-                                                        </span>
-                                                        {op.probabilidade && (
-                                                            <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
-                                                                {op.probabilidade}%
-                                                            </Badge>
-                                                        )}
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        ))
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </div>
-                    );
-                })}
-            </div>
+            <KanbanBoard initialDeals={oportunidades} etapas={etapas} />
 
             {/* Summary Stats */}
             <Grid cols={3}>

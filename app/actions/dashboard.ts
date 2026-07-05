@@ -13,7 +13,7 @@ export async function getKPIs() {
     ] = await Promise.all([
         supabase.from('deals').select('*', { count: 'exact', head: true }),
         supabase.from('projects').select('*', { count: 'exact', head: true }),
-        supabase.from('transactions').select('valor, tipo')
+        supabase.from('entradas_saidas').select('valor, tipo')
     ])
 
     // Calculate revenue (Entradas - Saidas)
@@ -31,7 +31,7 @@ export async function getKPIs() {
 export async function getGoals() {
     const supabase = await createClient()
     const { data, error } = await supabase
-        .from('goals')
+        .from('metas')
         .select('*')
         .order('created_at', { ascending: false })
 
